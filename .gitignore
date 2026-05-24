@@ -1,0 +1,76 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+.venv*/
+venv/
+
+# Local agent/runtime state
+AGENTS.md
+.claude/
+.deps/
+
+# Public release excludes these project folders
+tests/
+docs/
+configs/
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+service-account*.json
+
+# Third-party or copyrighted research data
+data/raw/**
+data/interim/**
+data/processed/**
+data/metadata/
+!data/raw/
+!data/raw/.gitkeep
+!data/interim/
+!data/interim/.gitkeep
+!data/processed/
+!data/processed/.gitkeep
+
+# Private/generated experiment artifacts
+results/**
+reports/**
+outputs/
+tmp/
+logs/
+
+# Human-evaluation and private mapping artifacts
+*private_mapping*.jsonl
+*private_mapping*.xlsx
+*judge_candidate_mapping*.jsonl
+reports/**/*human_eval*.xlsx
+reports/**/*human_eval*.zip
+results/**/*human_eval*.jsonl
+results/**/*human_eval*.csv
+人工测评结果*/
+人工测评结果*.zip
+
+# Build and scratch exports
+artifact-build-manifest.json
+/*.pptx
+/*.pdf
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.7z
+*.log
+*.aux
+*.fls
+*.fdb_latexmk
+*.bbl
+*.blg
+*.pid

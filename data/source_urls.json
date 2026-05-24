@@ -1,0 +1,44 @@
+{
+  "note": "Source URLs only. This file does not contain poem text, translations, model outputs, or evaluation results.",
+  "sources": [
+    {
+      "id": "modern_chinese_poetry",
+      "name": "21st Century Chinese Poetry",
+      "base_url": "https://modernchinesepoetry.com/",
+      "seed_urls": [
+        "https://modernchinesepoetry.com/shikan.php",
+        "https://modernchinesepoetry.com/poems.php"
+      ],
+      "copyright_note": "Follow the source site's terms. Do not redistribute full text without permission."
+    },
+    {
+      "id": "poetry_international_chinese",
+      "name": "Poetry International Chinese Poems",
+      "base_url": "https://www.poetryinternational.com/",
+      "seed_urls": [
+        "https://poetryinternationalweb.org/pi/site/collection/poem_submenu_language/Chinese"
+      ],
+      "copyright_note": "Pages include per-poem copyright and translation credits. Preserve provenance and do not redistribute full text without permission."
+    },
+    {
+      "id": "paper_republic_read",
+      "name": "Read Paper Republic",
+      "base_url": "https://paper-republic.org/",
+      "seed_urls": [
+        "https://paper-republic.org/pubs/read/",
+        "https://paper-republic.org/pubs/read/series/four-nanjing-poets/",
+        "https://paper-republic.org/pubs/read/sorrow/"
+      ],
+      "copyright_note": "Translated literary works include source-specific publication notes. Preserve page URLs and translator credits."
+    },
+    {
+      "id": "belt_road_literary_network",
+      "name": "Belt and Road Literary Network Selected Contemporary Chinese Poems",
+      "base_url": "https://brliterature.com/",
+      "seed_urls": [
+        "https://brliterature.com/en/selected-contemporary-chinese-poems/"
+      ],
+      "copyright_note": "The source page states all rights reserved. Keep any local use URL-provenanced."
+    }
+  ]
+}
