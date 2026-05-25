@@ -2,7 +2,7 @@
 
 Public code supplement for the paper **"Less Thinking, More Poetry: A Controlled Comparison of Reasoning and Non-Reasoning LLMs for Modern Chinese Poetry Translation"**.
 
-本仓库是论文 **"Less Thinking, More Poetry: A Controlled Comparison of Reasoning and Non-Reasoning LLMs for Modern Chinese Poetry Translation"** 的公开代码补充材料。题名可译为：**“少些推理，多些诗意：推理型与非推理型大语言模型在中国现代诗英译中的受控比较”**。研究聚焦于中国现代诗中译英任务，比较推理模式与非推理模式下大语言模型的翻译表现。
+本仓库是论文 **"Less Thinking, More Poetry: A Controlled Comparison of Reasoning and Non-Reasoning LLMs for Modern Chinese Poetry Translation"** 的代码，比较推理模式与非推理模式下大语言模型的翻译表现。
 
 ## Scope / 仓库范围
 
@@ -10,17 +10,10 @@ This repository provides the runnable code needed to reproduce the study protoco
 
 本仓库提供复现实验流程所需的可运行代码，包括翻译基线、自动指标评分、固定随机种子的 LLM-as-judge 评测，以及用于合并和检查实验输出的辅助脚本。
 
-The repository does not distribute poem texts, reference translations, collected datasets, raw model outputs, hidden reasoning, judge responses, human evaluation workbooks, private mappings, API keys, or result tables.
+Due to copyright and privacy restrictions, this repository does not include poem texts, reference translations, curated datasets, raw model outputs, reasoning traces, judge scores, or human evaluation scores. Because the source poems and published translations are protected by copyright and governed by the terms of their source websites, this repository only provides publicly available source links in data/source_urls.json. Readers who wish to reproduce the experiments should compile their own dataset in compliance with those terms.No automated data-collection code is included in this public repository.
 
-本仓库不分发诗歌正文、参考译文、已整理数据集、原始模型输出、隐藏推理、评审原始响应、人工评测工作簿、私有映射、API 密钥或结果表格。
+受到版权和隐私限制，本仓库不包含诗歌正文、参考译文、已整理数据集、原始模型输出、推理、评审分数、人工评测分数。由于诗歌原文与已发表译文受版权及来源网站条款约束，本仓库仅在 data/source_urls.json 中列出公开来源链接。读者如需复现实验，应在合规前提下自行整理本地数据集。本公开仓库不包含自动化数据采集代码。
 
-Because the source poems and published translations are subject to copyright and source-site terms, only source URLs are provided in `data/source_urls.json`. Readers who wish to reproduce the experiments must prepare their own local dataset in accordance with those terms.
-
-由于诗歌原文与已发表译文受版权及来源网站条款约束，本仓库仅在 `data/source_urls.json` 中列出公开来源链接。读者如需复现实验，应在合规前提下自行整理本地数据集。
-
-No automated data-collection code is included in this public repository.
-
-本公开仓库不包含自动化数据采集代码。
 
 ```text
 data/source_urls.json      Public source URLs only
@@ -33,11 +26,11 @@ src/poetry_reasoning/     Core experiment package
 
 The code reproduces the experimental protocol and reporting pipeline. Exact API outputs may differ over time because external model providers, decoding settings, and service-side implementations can change.
 
-本仓库能够复现实验流程与统计管线。由于外部模型服务、解码设置和服务端实现可能随时间变化，API 生成的逐条译文不保证与论文实验记录完全一致。
+本仓库能够复现完整的实验流程。由于外部模型服务、解码设置和服务端实现可能随时间变化，API 生成的逐条译文不保证与论文实验完全一致。
 
 The paper's numerical tables are based on the authors' controlled private experiment logs. This repository is intended to let readers rerun the protocol with locally prepared data and their own API credentials.
 
-论文中的数值表格来自作者在受控条件下保存的私有实验记录。本仓库的用途，是帮助读者在自行准备数据并配置 API 凭证后复现实验流程。
+论文中的数值表格来自作者在受控条件下的实验记录。本仓库的用途，是帮助读者在自行准备数据并配置 API 凭证后复现实验流程。
 
 During translation, the systems receive only the Chinese source poem. Reference translations are used only for offline scoring or judge evaluation and are never included in translation prompts.
 
