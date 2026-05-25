@@ -1,9 +1,3 @@
-# Data Directory / 数据目录
-
-This directory intentionally contains no raw dataset.
-
-本目录有意不存放原始数据集。
-
 The study uses published modern Chinese poems and English translations whose copyrights and reuse conditions belong to their respective sources. For that reason, this public repository cannot redistribute poem texts, reference translations, compiled datasets, model outputs, or evaluation results.
 
 本研究涉及已发表的中国现代诗及其英文译文，其版权与再使用条件归属各来源方。因此，本公开仓库不能重新分发诗歌正文、参考译文、已整理数据集、模型输出或评测结果。
