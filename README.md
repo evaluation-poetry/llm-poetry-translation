@@ -1,35 +1,53 @@
 # LLM Poetry Translation
 
-Public code supplement for a paper on **reasoning vs. non-reasoning LLM settings for Chinese-to-English modern Chinese poetry translation**.
+Public code supplement for the paper **"Less Thinking, More Poetry: A Controlled Comparison of Reasoning and Non-Reasoning LLMs for Modern Chinese Poetry Translation"**.
 
-本仓库是一篇论文的公开代码补充材料，研究主题是：**推理模式与非推理模式的大语言模型在中国现代诗中译英任务中的表现差异**。
+本仓库是论文 **"Less Thinking, More Poetry: A Controlled Comparison of Reasoning and Non-Reasoning LLMs for Modern Chinese Poetry Translation"** 的公开代码补充材料。题名可译为：**“少些推理，多些诗意：推理型与非推理型大语言模型在中国现代诗英译中的受控比较”**。研究聚焦于中国现代诗中译英任务，比较推理模式与非推理模式下大语言模型的翻译表现。
 
-## What Is Included / 仓库内容
+## Scope / 仓库范围
 
-This repository includes runnable experiment code only. It does not include copyrighted poem text, reference translations, collected datasets, raw model outputs, hidden reasoning, judge responses, human evaluation workbooks, private mappings, API keys, or result tables.
+This repository provides the runnable code needed to reproduce the study protocol: translation baselines, automatic metric scoring, fixed-seed LLM-as-judge evaluation, and small utility scripts for merging and checking experiment outputs.
 
-本仓库只包含可运行的实验代码，不包含受版权保护的诗歌正文、参考译文、已整理数据集、原始模型输出、隐藏推理、评审原始响应、人工评测工作簿、私有映射、API 密钥或结果表格。
+本仓库提供复现实验流程所需的可运行代码，包括翻译基线、自动指标评分、固定随机种子的 LLM-as-judge 评测，以及用于合并和检查实验输出的辅助脚本。
 
-The public source URLs are listed in `data/source_urls.json`. Readers must prepare any local dataset themselves under the terms of the source websites.
+The repository does not distribute poem texts, reference translations, collected datasets, raw model outputs, hidden reasoning, judge responses, human evaluation workbooks, private mappings, API keys, or result tables.
 
-公开来源链接见 `data/source_urls.json`。读者如需复现实验，应在遵守来源网站条款的前提下自行准备本地数据集。
+本仓库不分发诗歌正文、参考译文、已整理数据集、原始模型输出、隐藏推理、评审原始响应、人工评测工作簿、私有映射、API 密钥或结果表格。
 
-No crawler or data-collection code is included in this public repository.
+Because the source poems and published translations are subject to copyright and source-site terms, only source URLs are provided in `data/source_urls.json`. Readers who wish to reproduce the experiments must prepare their own local dataset in accordance with those terms.
 
-本公开仓库不包含爬取或数据采集代码。
+由于诗歌原文与已发表译文受版权及来源网站条款约束，本仓库仅在 `data/source_urls.json` 中列出公开来源链接。读者如需复现实验，应在合规前提下自行整理本地数据集。
+
+No automated data-collection code is included in this public repository.
+
+本公开仓库不包含自动化数据采集代码。
 
 ```text
 data/source_urls.json      Public source URLs only
-scripts/                  Translation, scoring, judge, and utility entry points
-src/poetry_reasoning/     Experiment package
+scripts/                  Experiment entry points and utilities
+src/poetry_reasoning/     Core experiment package
 .env.example              Environment variable template
 ```
 
+## Reproducibility / 复现边界
+
+The code reproduces the experimental protocol and reporting pipeline. Exact API outputs may differ over time because external model providers, decoding settings, and service-side implementations can change.
+
+本仓库能够复现实验流程与统计管线。由于外部模型服务、解码设置和服务端实现可能随时间变化，API 生成的逐条译文不保证与论文实验记录完全一致。
+
+The paper's numerical tables are based on the authors' controlled private experiment logs. This repository is intended to let readers rerun the protocol with locally prepared data and their own API credentials.
+
+论文中的数值表格来自作者在受控条件下保存的私有实验记录。本仓库的用途，是帮助读者在自行准备数据并配置 API 凭证后复现实验流程。
+
+During translation, the systems receive only the Chinese source poem. Reference translations are used only for offline scoring or judge evaluation and are never included in translation prompts.
+
+翻译阶段中，模型只接收中文原诗。参考译文仅用于离线评分或评审环节，不会被写入翻译提示词。
+
 ## Environment / 环境配置
 
-Use Python 3.10 or newer. On Windows, use the project virtual environment explicitly instead of `py -3`, because `py -3` may resolve to an older interpreter.
+Use Python 3.10 or newer. On Windows, invoke the virtual-environment interpreter directly instead of `py -3`, because `py -3` may resolve to an older Python installation.
 
-请使用 Python 3.10 或更高版本。在 Windows 上请明确使用项目虚拟环境，不建议使用可能指向旧版本解释器的 `py -3`。
+请使用 Python 3.10 或更高版本。在 Windows 上，请直接调用虚拟环境中的解释器，不建议使用可能指向旧版 Python 的 `py -3`。
 
 ```powershell
 python -m venv .venv
@@ -37,11 +55,11 @@ python -m venv .venv
 .\.venv\Scripts\python -m pip install -r requirements.txt
 ```
 
-Copy `.env.example` to `.env` and fill only the credentials needed for the systems you run. Never commit `.env`.
+Copy `.env.example` to `.env` and fill only the credentials required for the systems you plan to run. The `.env` file is local and must not be committed.
 
-复制 `.env.example` 为 `.env`，只填写实际需要运行的系统凭证。不要提交 `.env`。
+将 `.env.example` 复制为 `.env`，只填写实际运行所需系统的凭证。`.env` 属于本地私有文件，不应提交到仓库。
 
-## Local Data Format / 本地数据格式
+## Data Preparation / 数据准备
 
 The default local dataset path is:
 
@@ -51,9 +69,9 @@ The default local dataset path is:
 data/processed/bilingual_modern_chinese_poetry.jsonl
 ```
 
-Each JSONL row should contain at least:
+Each JSONL row should contain at least the following fields:
 
-每条 JSONL 至少应包含：
+每条 JSONL 记录至少应包含以下字段：
 
 ```json
 {
@@ -68,13 +86,13 @@ Each JSONL row should contain at least:
 
 Optional fields such as `page_url`, `title_zh`, `poet_zh`, `translator`, and `quality_flags` are preserved in generated manifests when present.
 
-如存在 `page_url`、`title_zh`、`poet_zh`、`translator`、`quality_flags` 等字段，生成 manifest 时会保留这些信息。
+如果数据中包含 `page_url`、`title_zh`、`poet_zh`、`translator`、`quality_flags` 等可选字段，生成 manifest 时会一并保留。
 
 ## Run Locally / 本地运行
 
-Run a short smoke translation first. Providers without configured credentials will be recorded as `not_available`, which is useful for checking the pipeline without exposing keys.
+Run a small trial first. Providers without configured credentials will be recorded as `not_available`, which allows the pipeline to be checked before any keys are used.
 
-建议先运行一个很小的 smoke translation。未配置凭证的系统会被记录为 `not_available`，可用于检查流程而不暴露密钥。
+建议先进行一次小规模试跑。未配置凭证的服务会被记录为 `not_available`，这样可以在使用密钥前先检查流程是否连通。
 
 ```powershell
 .\.venv\Scripts\python scripts\run_baseline_translations.py `
@@ -107,7 +125,7 @@ Run the full translation protocol:
 
 Score final translations only:
 
-只对最终译文评分：
+仅对最终译文进行评分：
 
 ```powershell
 .\.venv\Scripts\python scripts\score_baseline_outputs.py `
@@ -121,7 +139,7 @@ Score final translations only:
 
 Run the fixed-seed LLM-as-judge evaluation:
 
-运行固定随机种子的 LLM-as-judge 评价：
+运行固定随机种子的 LLM-as-judge 评测：
 
 ```powershell
 .\.venv\Scripts\python scripts\run_llm_judge.py `
@@ -135,15 +153,19 @@ Run the fixed-seed LLM-as-judge evaluation:
   --seed 20260513
 ```
 
+Generated outputs are written under `results/`, which is intentionally ignored by git.
+
+所有运行结果都会写入 `results/` 目录；该目录已被 git 忽略，不属于公开仓库内容。
+
 ## Run On A Server / 服务器运行
 
-The server workflow uses the same Python entry points. For long API runs, split the task into deterministic shards and run each shard in the background.
+The server workflow uses the same Python entry points as the local workflow. For long API runs, split the task into deterministic shards and run each shard in the background.
 
-服务器端与本地使用同一套 Python 入口。长时间 API 任务可按确定性 shard 切片，并在后台运行。
+服务器端与本地端使用同一套 Python 入口。对于耗时较长的 API 任务，可以将任务切分为确定性的多个分片，并在后台分别运行。
 
 Example for shard 0 of 4:
 
-4 个切片中的第 0 个示例：
+以下示例运行 4 个分片中的第 0 个：
 
 ```bash
 mkdir -p logs results
@@ -163,7 +185,7 @@ PYTHONPATH=src nohup .venv/bin/python scripts/run_baseline_translations.py \
 
 After all shards finish, merge them:
 
-全部切片完成后合并：
+所有分片完成后，合并输出文件：
 
 ```bash
 PYTHONPATH=src .venv/bin/python scripts/merge_jsonl_outputs.py \
@@ -174,18 +196,6 @@ PYTHONPATH=src .venv/bin/python scripts/merge_jsonl_outputs.py \
   --output-path results/full397_outputs.jsonl
 ```
 
-Then run the same scoring and judge commands shown in the local workflow.
+Then run the same scoring and LLM-as-judge commands shown in the local workflow.
 
-之后继续运行本地流程中相同的评分和 LLM-as-judge 命令。
-
-## Verification / 上传前检查
-
-```powershell
-.\.venv\Scripts\python -m compileall -q src scripts
-git status --short
-git ls-tree -r --name-only HEAD
-```
-
-Before pushing, confirm that the tracked file list contains no `results/`, `reports/`, `.env`, `.venv`, raw data, workbooks, PDFs, archives, private mappings, or local absolute paths.
-
-推送前请确认 Git 跟踪文件清单中没有 `results/`、`reports/`、`.env`、`.venv`、原始数据、工作簿、PDF、压缩包、私有映射或本机绝对路径。
+随后继续运行本地流程中相同的自动评分和 LLM-as-judge 命令。
