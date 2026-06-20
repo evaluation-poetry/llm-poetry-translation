@@ -119,10 +119,6 @@ def _is_balance_error(status_code: int | None, text: str) -> bool:
         "billing",
         "credit",
         "no balance",
-        "余额",
-        "额度",
-        "欠费",
-        "充值",
     ]
     return status_code in {402, 403} and any(marker in lowered for marker in markers) or any(
         marker in lowered for marker in markers

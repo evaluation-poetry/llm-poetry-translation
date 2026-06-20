@@ -16,8 +16,12 @@ AGENTS.md
 
 # Public release excludes these project folders
 tests/
-docs/
 configs/
+
+# Private local notes and reference materials
+docs/meetings/
+docs/references/
+docs/superpowers/
 
 # Local configuration and credentials
 .env
@@ -55,8 +59,6 @@ reports/**/*human_eval*.xlsx
 reports/**/*human_eval*.zip
 results/**/*human_eval*.jsonl
 results/**/*human_eval*.csv
-人工测评结果*/
-人工测评结果*.zip
 
 # Build and scratch exports
 artifact-build-manifest.json

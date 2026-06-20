@@ -66,6 +66,50 @@ JUDGE_DIMENSIONS = [
     "Overall Impression",
 ]
 
+JUDGE_DIMENSION_DESCRIPTIONS = {
+    "Semantic Fidelity": (
+        "Preservation of the source poem's core meaning, events, relations, images, "
+        "ambiguities, and implied content without unsupported additions."
+    ),
+    "Similarity to Reference": (
+        "Thematic, stylistic, and interpretive similarity to the authoritative human "
+        "reference without requiring word-for-word matching."
+    ),
+    "Imagery and Rhetoric": (
+        "Preservation or creative transformation of images, metaphors, personification, "
+        "parallelism, ambiguity, and rhetorical effects."
+    ),
+    "Thought and Emotion": (
+        "Conveyance of the poem's intellectual movement, emotional pressure, mood, "
+        "tonal shifts, and deeper thought."
+    ),
+    "Lineation and Rhythm": (
+        "Effectiveness of line breaks, stanza breaks, pauses, pacing, rhythm, sound "
+        "patterning, and free-verse musicality in English."
+    ),
+    "Modernity and Defamiliarization": (
+        "Retention of modern poetic texture, experimental quality, estrangement, unusual "
+        "collocations, and non-conventional perception."
+    ),
+    "Cultural and Idiomatic Transfer": (
+        "Handling of culture-specific terms, historical references, idioms, proper names, "
+        "local images, and Chinese-specific expressions."
+    ),
+    "Voice, Tone, and Style": (
+        "Preservation of the source poem's voice and stylistic posture, including quietness, "
+        "irony, fragmentation, solemnity, colloquiality, lyricism, or experimental density."
+    ),
+    "Poeticity": (
+        "Poetic density, suggestiveness, aesthetic tension, image resonance, and memorable "
+        "language beyond literal adequacy."
+    ),
+    "English Naturalness": (
+        "Whether the translation reads as strong English poetry rather than rigid "
+        "translationese, while allowing controlled poetic deviation from ordinary grammar."
+    ),
+    "Overall Impression": "Integrated assessment of the candidate translation's overall strength.",
+}
+
 JUDGE_PROMPT_TEMPLATE = """You are a professional bilingual evaluator of Chinese-to-English modern poetry translation.
 Your task is to evaluate anonymous candidate English translations of a Chinese modern poem. You will receive: 1. the Chinese source poem, 2. one authoritative human English reference translation, 3. one or more anonymous candidate translations.
 Important rules: Do not infer or mention the model, vendor, system identity, data source, or generation order. Use the authoritative human reference as an important benchmark, but not as the only acceptable translation. A candidate may differ from the reference and still score highly if it faithfully and poetically renders the Chinese source. Evaluate the final translated poem only. Do not reward or penalize hidden reasoning. Give scores from 0 to 10 in increments of 0.5. Higher is better. For each candidate, score every dimension and provide a concise reason for each dimension. Output strict JSON only. Do not use Markdown.
