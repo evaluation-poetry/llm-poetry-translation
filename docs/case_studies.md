@@ -27,7 +27,7 @@ The public paper can use a compressed version of this structure. The private sup
 
 ## Selected Excellent Cases
 
-These cases were selected from local qualitative materials because they show strong large-model translations and clear differences between non-thinking and thinking-enabled variants. They are public-safe identifiers and score summaries, not full text redistributions.
+These cases were selected from local qualitative materials because they show high-quality LLM translations and clear differences between the non-thinking and thinking variants.
 
 | Case | Record id | Source subset | Main systems | Judge score | Human mean | Focus |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -37,14 +37,14 @@ These cases were selected from local qualitative materials because they show str
 
 ### Case C1: Claude Sonnet 4.6 Non-thinking
 
-This is the strongest qualitative case for the human-evaluation preference. Human annotators separate the two Claude translations much more sharply than the LLM judge does. The non-thinking version is preferred because it renders culture- and idiom-bearing expressions more naturally and keeps the central sunrise image more compact and poetic. The thinking version is not a format failure; its weakness is more subtle. It is line-aligned and readable, but it tends toward literal or stiff phrasing, which is exactly the type of degradation that automatic format diagnostics can miss.
+This is the strongest qualitative case for the human-evaluation preference. Human annotators separate the two Claude translations much more sharply than the LLM judge does. The non-thinking version is preferred because it renders culture- and idiom-bearing expressions more naturally and keeps the central sunrise image more compact and poetic. The thinking version is not malformed; its weakness is more subtle. It is line-aligned and readable, but it tends toward literal or stiff phrasing, which is exactly the type of degradation that automatic format diagnostics can miss.
 
 Analysis dimensions to emphasize:
 
 - **Cultural and Idiomatic Transfer:** compare how the translation handles place-name/culture-specific phrasing and lunar-calendar language.
 - **Voice, Tone, and Style:** examine whether colloquial reassurance remains idiomatic in English.
-- **Poeticity:** focus on whether the sunrise image is carried as an image or flattened into explanatory language.
-- **Lineation and Rhythm:** check whether pauses and stanza pressure remain visible.
+- **Poeticity:** focus on whether the sunrise image stays vivid or is reduced to plain explanation.
+- **Lineation and Rhythm:** check whether pauses and stanza breaks are preserved.
 
 ### Case C2: Qwen3.6 Plus Non-thinking
 
@@ -53,7 +53,7 @@ This case demonstrates that the non-thinking advantage is not limited to Claude.
 Analysis dimensions to emphasize:
 
 - **Semantic Fidelity:** inspect whether the candidate preserves the event or scene without overexplaining it.
-- **Imagery and Rhetoric:** examine the night-surf image as a poetic hinge.
+- **Imagery and Rhetoric:** examine the night-surf image as the pivotal line.
 - **English Naturalness:** compare idiomatic alternatives that are close in meaning but different in poetic force.
 - **Overall Impression:** connect local lexical choices to the larger reading effect.
 
@@ -64,7 +64,7 @@ This is a backup case for the Claude family. It has a large LLM-judge gap and a 
 Analysis dimensions to emphasize:
 
 - **Lineation and Rhythm:** compare whether syntactic flow respects line breaks.
-- **Thought and Emotion:** inspect whether the translation keeps emotional pressure implicit.
+- **Thought and Emotion:** inspect whether the translation keeps the emotion understated rather than stated outright.
 - **Modernity and Defamiliarization:** check whether unusual image language remains strange in English.
 - **Poeticity:** examine whether the candidate keeps suggestiveness without turning into paraphrase.
 
@@ -89,4 +89,4 @@ The private packet includes source poems, references, and selected system output
 
 ## Why Not Publish Complete Cases Here?
 
-The source poems and published translations are copyright-controlled, and raw model outputs belong to private experiment logs. The repository therefore provides code and templates that make the case studies reproducible without turning the public supplement into a redistribution of the dataset or generated outputs.
+The source poems and published translations are copyright-controlled, and raw model outputs belong to private experiment logs, so the repository ships code and templates rather than the texts themselves.

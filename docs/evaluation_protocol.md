@@ -1,6 +1,6 @@
 # Evaluation Protocol
 
-The study evaluates only final English translations. Hidden reasoning traces, provider-side thinking summaries, and visible workflow contamination are not used as metric or judge inputs.
+The study evaluates only final English translations. Hidden reasoning traces, provider-side thinking summaries, and any leftover workflow scaffolding are not used as metric or judge inputs.
 
 ## Translation Systems
 
@@ -20,16 +20,7 @@ The primary comparison is paired within each model family: non-thinking versus t
 
 ## Translation Input Rule
 
-Each provider receives only the Chinese source poem. The following information is excluded from translation prompts:
-
-- Human English reference translation.
-- English title.
-- Translator name.
-- Source subset label.
-- Model identity.
-- System identity.
-
-This source-only design prevents reference leakage and keeps the thinking switch as the main manipulated provider variable.
+Each provider receives only the Chinese source poem. The reference translation, English title, translator name, source-subset label, and any model or system identity are excluded from translation prompts (see docs/dataset_schema.md for the full prompt-safety rules). This source-only design prevents reference leakage and keeps the thinking setting as the main variable being varied across providers.
 
 ## Automatic Metrics
 
@@ -93,4 +84,4 @@ OMP is computed with the same unweighted source-mean strategy as the LLM-as-judg
 
 ## Interpretation
 
-Automatic metrics, LLM-as-judge results, and human evaluation answer related but different questions. Automatic metrics reward similarity to a single reference over all 397 poems. Judge and human layers use a source-balanced 20-poem sample and poetry-specific rubrics. The paper therefore frames differences across these layers as metric/judge/human disagreement rather than as a single universal winner.
+Automatic metrics, LLM-as-judge results, and human evaluation answer related but different questions. Automatic metrics reward similarity to a single reference over all 397 poems. Judge and human layers use a source-balanced 20-poem sample and poetry-specific rubrics. The paper therefore frames differences across these layers as metric/judge/human disagreement rather than declaring one system best overall.

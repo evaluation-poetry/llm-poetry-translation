@@ -35,8 +35,8 @@ CURATED_CASES = [
             "and a central sunrise image."
         ),
         "analysis_note": (
-            "Use this as the main Claude case. The non-thinking version is preferred by both "
-            "judge and human layers, with a much larger human gap. The thinking version is "
+            "Use this as the main Claude case. The non-thinking version is preferred by both the judge and human evaluations, "
+            "with a much larger human gap. The thinking version is "
             "readable but tends toward stiffer literal phrasing."
         ),
     },
@@ -76,8 +76,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--human-scores-path",
         type=Path,
-        default=PROJECT_ROOT / "reports" / "viz_menu_20260612" / "D_case" / "work" / "per_poem_system_human.csv",
-        help="Optional private per-poem human score CSV.",
+        default=PROJECT_ROOT / "results" / "per_poem_system_human.csv",
+        help="Optional per-poem human score CSV.",
     )
     parser.add_argument(
         "--output-path",
@@ -249,7 +249,7 @@ def write_case(
             [
                 "### Text Availability",
                 "",
-                "Complete source poems, references, and candidate translations are redacted in this public-safe export.",
+                "Complete source poems, references, and candidate translations are omitted from this redacted export.",
                 "Rerun this script with `--include-text` to generate a private local packet.",
                 "",
             ]

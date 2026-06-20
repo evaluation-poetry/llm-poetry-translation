@@ -38,7 +38,7 @@ Measures preservation of the source poem's speaking posture and stylistic charac
 
 ## 9. Poeticity
 
-Measures poetic density, suggestiveness, aesthetic tension, image resonance, and memorability. A strong translation has lines that feel made rather than merely transferred. This dimension is intentionally strict: a semantically adequate translation can still score lower if it lacks poetic force.
+Measures poetic density, suggestiveness, aesthetic tension, image resonance, and memorability. A strong translation has lines that feel crafted rather than merely transferred. This dimension is intentionally strict: a semantically adequate translation can still score lower if it lacks poetic force.
 
 ## 10. English Naturalness
 

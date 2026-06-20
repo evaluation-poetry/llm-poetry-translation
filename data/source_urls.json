@@ -13,7 +13,7 @@
     },
     {
       "id": "poetry_international_chinese",
-      "name": "Poetry International Chinese Poems",
+      "name": "Poetry International Chinese",
       "base_url": "https://www.poetryinternational.com/",
       "seed_urls": [
         "https://poetryinternationalweb.org/pi/site/collection/poem_submenu_language/Chinese"
@@ -33,12 +33,12 @@
     },
     {
       "id": "belt_road_literary_network",
-      "name": "Belt and Road Literary Network Selected Contemporary Chinese Poems",
+      "name": "Belt and Road Literary Network",
       "base_url": "https://brliterature.com/",
       "seed_urls": [
         "https://brliterature.com/en/selected-contemporary-chinese-poems/"
       ],
-      "copyright_note": "The source page states all rights reserved. Keep any local use URL-provenanced."
+      "copyright_note": "The source page states all rights reserved. Keep the source URL with any local copy."
     }
   ]
 }

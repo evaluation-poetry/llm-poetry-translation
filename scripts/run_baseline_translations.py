@@ -54,7 +54,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--include-flagged",
         action="store_true",
-        help="Include zh-en records with quality flags. Use this for the advisor-requested full 397-run.",
+        help="Include zh-en records with quality flags. Use this for the full 397-poem run.",
     )
     parser.add_argument("--force", action="store_true", help="Rerun outputs that already exist.")
     parser.add_argument("--retry-failed", action="store_true", help="Retry existing non-ok outputs while keeping ok rows.")

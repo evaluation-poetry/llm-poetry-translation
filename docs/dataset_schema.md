@@ -65,7 +65,7 @@ The four subsets are source-based provenance groups, not an official genre taxon
 
 ## Prompt Safety Rules
 
-The translation pipeline constructs provider messages from `source_zh` only. Do not add the following fields to translation prompts:
+The translation pipeline constructs provider messages from the Chinese source poem (original_zh) only. Do not add the following fields to translation prompts:
 
 - `translation_en`
 - English title

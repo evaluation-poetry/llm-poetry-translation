@@ -37,7 +37,7 @@ Translate the following modern Chinese poem into English:
 
 ## Translation Repair Prompt: `understand_translate_v2_final_only`
 
-This version is used to repair visible workflow contamination. It is still a unified translation prompt, not a provider-specific prompt.
+This version is used to repair outputs that leak the internal workflow (reasoning, planning, or labels) into the visible translation. It is still a unified translation prompt, not a provider-specific prompt.
 
 ### System Message
 

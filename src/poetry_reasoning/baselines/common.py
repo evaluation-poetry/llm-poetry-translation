@@ -270,7 +270,7 @@ def prompt_version() -> str:
 
 
 def has_visible_reasoning_contamination(text: str) -> bool:
-    """Detect visible workflow or analysis text that should not be scored as translation."""
+    """Detect visible workflow or analysis text that should not be treated as translation output."""
     return any(pattern.search(text or "") for pattern in VISIBLE_REASONING_PATTERNS)
 
 

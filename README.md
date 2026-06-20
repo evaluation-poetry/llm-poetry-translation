@@ -18,7 +18,7 @@ Due to copyright, provider, and privacy constraints, the public repository does 
 
 ## Public Supplement
 
-The paper is necessarily compact, so detailed reproducibility material is kept in this repository:
+Because the paper has limited space, detailed reproducibility material is kept in this repository:
 
 ```text
 docs/dataset_schema.md          Expected local JSONL schema
@@ -54,7 +54,7 @@ All automatic metrics and judge scores must be computed from final translation c
 
 ## Environment
 
-Use Python 3.10 or newer. On Windows, invoke the virtual-environment interpreter directly instead of `py -3`, because `py -3` may resolve to an older Python installation.
+Use Python 3.10 or newer. On Windows, call the virtual-environment interpreter directly rather than `py -3`, which may point to an older Python installation.
 
 ```powershell
 python -m venv .venv
@@ -89,7 +89,7 @@ Optional fields such as `page_url`, `title_zh`, `title_en`, `poet_zh`, `poet_en`
 
 ## Run Locally
 
-Run a small trial first. Providers without configured credentials are recorded as `not_available`, which allows the pipeline to be checked before any keys are used.
+Run a small trial first. Providers without configured credentials are recorded as `not_available`, so you can check the pipeline before adding any keys.
 
 ```powershell
 .\.venv\Scripts\python scripts\run_baseline_translations.py `
@@ -144,7 +144,7 @@ Run the fixed-seed LLM-as-judge evaluation:
   --seed 20260513
 ```
 
-Generated outputs are written under `results/`, which is intentionally ignored by git.
+Generated outputs are written under `results/`, which is ignored by git.
 
 ## Case-Study Export
 
