@@ -1,0 +1,89 @@
+{
+  "schema_version": "1.0",
+  "confidence_level": 0.95,
+  "multiple_testing": "Holm family-wise correction",
+  "analyses": [
+    {
+      "script": "scripts/stats_alignment.py",
+      "methods": [
+        "Pearson correlation",
+        "Spearman correlation",
+        "Kendall correlation"
+      ]
+    },
+    {
+      "script": "scripts/stats_crossjudge.py",
+      "seed": 20260706,
+      "bootstrap_samples": 10000,
+      "permutation_samples": 10000,
+      "minimum_valid_fraction": 0.8,
+      "methods": [
+        "paired record bootstrap",
+        "blocked record permutation",
+        "Pearson correlation",
+        "Spearman correlation",
+        "Kendall correlation",
+        "judge by system-family interaction",
+        "rank stability"
+      ]
+    },
+    {
+      "script": "scripts/stats_human_paired.py",
+      "seed": 20260706,
+      "bootstrap_samples": 10000,
+      "methods": [
+        "mixed-effects model",
+        "paired Wilcoxon test",
+        "paired bootstrap confidence interval",
+        "Cohen dz",
+        "Krippendorff alpha ordinal",
+        "Kendall W",
+        "Fleiss kappa nominal",
+        "minimum detectable effect"
+      ]
+    },
+    {
+      "script": "scripts/stats_intensity.py",
+      "seed": 20260706,
+      "bootstrap_samples": 10000,
+      "expected_automatic_records": 397,
+      "expected_judge_records": 20,
+      "methods": [
+        "paired Wilcoxon test",
+        "paired bootstrap confidence interval"
+      ]
+    },
+    {
+      "script": "scripts/stats_judge_paired.py",
+      "seed": 20260706,
+      "bootstrap_samples": 10000,
+      "methods": [
+        "paired Wilcoxon test",
+        "paired bootstrap confidence interval",
+        "minimum detectable effect"
+      ]
+    },
+    {
+      "script": "scripts/stats_open_qwen35.py",
+      "seed": 20260716,
+      "bootstrap_samples": 10000,
+      "methods": [
+        "paired Wilcoxon test",
+        "paired bootstrap confidence interval",
+        "Holm correction across seven automatic metrics",
+        "cap-exception exclusion sensitivity"
+      ]
+    },
+    {
+      "script": "scripts/stats_rebuttal_auxiliary.py",
+      "seed": 20260706,
+      "resamples": 10000,
+      "methods": [
+        "annotator direction check",
+        "small-source exclusion sensitivity",
+        "length-confound association",
+        "fixed-seed panel COMET resampling"
+      ]
+    }
+  ]
+}

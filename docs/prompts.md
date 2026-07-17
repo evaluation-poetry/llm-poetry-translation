@@ -5,6 +5,7 @@ This file expands the compact prompt figure in the paper. Translation prompts ar
 ## Translation Prompt: `understand_translate_v1`
 
 This is the current full-run translation prompt. It is implemented in `src/poetry_reasoning/baselines/common.py`.
+The DeepSeek and Qwen reasoning-intensity runs and both open-weight Qwen modes use this template unchanged.
 
 ### System Message
 
@@ -85,6 +86,7 @@ Translate the following modern Chinese poem into English:
 ## LLM-as-Judge Prompt: `agents_md_judge_v1_20260514`
 
 This is the full prompt behind the right panel of Figure 2. It is implemented in `src/poetry_reasoning/evaluation/judge.py`.
+The DeepSeek non-thinking judge and the GPT high-reasoning cross-judge use the same text and validation schema.
 
 ```text
 You are a professional bilingual evaluator of Chinese-to-English modern poetry translation.

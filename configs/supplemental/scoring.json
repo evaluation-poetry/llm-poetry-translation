@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0",
+  "expected_records_per_system": 397,
+  "metric_profile": "all",
+  "score_input": "final_translation_only",
+  "reasoning_content_scored": false,
+  "comet": {
+    "model": "Unbabel/wmt22-comet-da",
+    "batch_size": 4,
+    "gpus": 0
+  },
+  "bertscore": {
+    "component": "F1",
+    "language": "en",
+    "model": "microsoft/deberta-xlarge-mnli",
+    "batch_size": 64
+  },
+  "sacrebleu": {
+    "bleu": true,
+    "chrf_word_order": 2,
+    "ter": true,
+    "ter_segmentation": "paired_nonempty_poem_lines"
+  },
+  "form_diagnostics": {
+    "line_count_difference": true,
+    "length_ratio": true
+  }
+}

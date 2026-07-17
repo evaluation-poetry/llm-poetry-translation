@@ -14,9 +14,6 @@ AGENTS.md
 .claude/
 .deps/
 
-# Local configuration
-configs/
-
 # Private local notes and reference materials
 docs/meetings/
 docs/references/
@@ -45,6 +42,8 @@ data/metadata/
 
 # Private/generated experiment artifacts
 results/**
+!results/statistical_tests/
+!results/statistical_tests/**
 reports/**
 outputs/
 tmp/

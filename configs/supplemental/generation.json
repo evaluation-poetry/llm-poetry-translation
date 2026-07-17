@@ -1,0 +1,120 @@
+{
+  "schema_version": "1.0",
+  "corpus_records": 397,
+  "prompt_version": "understand_translate_v1",
+  "input_policy": {
+    "source_zh_only": true,
+    "reference_translation_sent": false,
+    "system_identity_sent": false
+  },
+  "shared_request_policy": {
+    "stream": false,
+    "temperature_sent": false,
+    "top_p_sent": false
+  },
+  "systems": [
+    {
+      "system_id": "deepseek_v4_flash_thinking",
+      "model": "deepseek-v4-flash",
+      "role": "reused_control",
+      "request": {
+        "max_tokens": 8192,
+        "reasoning_effort": "high",
+        "stream": false,
+        "thinking": "enabled"
+      }
+    },
+    {
+      "system_id": "deepseek_v4_flash_thinking_max",
+      "model": "deepseek-v4-flash",
+      "role": "supplemental_run",
+      "request": {
+        "max_tokens": 8192,
+        "reasoning_effort": "max",
+        "stream": false,
+        "thinking": "enabled"
+      }
+    },
+    {
+      "system_id": "qwen36_plus_thinking",
+      "model": "qwen3.6-plus",
+      "role": "reused_control",
+      "request": {
+        "enable_thinking": true,
+        "max_tokens": 8192,
+        "stream": false,
+        "thinking_budget_sent": false
+      }
+    },
+    {
+      "system_id": "qwen36_plus_thinking_b2048",
+      "model": "qwen3.6-plus",
+      "role": "supplemental_run",
+      "request": {
+        "enable_thinking": true,
+        "max_tokens": 8192,
+        "stream": false,
+        "thinking_budget": 2048
+      }
+    },
+    {
+      "system_id": "qwen36_plus_thinking_b4096",
+      "model": "qwen3.6-plus",
+      "role": "supplemental_run",
+      "request": {
+        "enable_thinking": true,
+        "max_tokens": 8192,
+        "stream": false,
+        "thinking_budget": 4096
+      }
+    },
+    {
+      "system_id": "qwen35_9b_open_non_thinking",
+      "model": "Qwen/Qwen3.5-9B",
+      "role": "open_weight_control",
+      "request": {
+        "enable_thinking": false,
+        "max_tokens": 16384,
+        "seed": 20260716,
+        "stream": false
+      }
+    },
+    {
+      "system_id": "qwen35_9b_open_thinking",
+      "model": "Qwen/Qwen3.5-9B",
+      "role": "open_weight_treatment",
+      "request": {
+        "enable_thinking": true,
+        "max_tokens": 16384,
+        "seed": 20260716,
+        "stream": false
+      }
+    }
+  ],
+  "open_weight_runtime": {
+    "python_version": "3.10.8",
+    "vllm_version": "0.25.1",
+    "torch_version": "2.11.0",
+    "triton_version": "3.6.0",
+    "flashinfer_version": "0.6.13",
+    "dtype": "bfloat16",
+    "quantization": null,
+    "max_model_len": 32768,
+    "max_num_seqs": 24,
+    "gpu_memory_utilization": 0.92,
+    "prefix_caching": true,
+    "reasoning_parser": "qwen3",
+    "language_model_only": true,
+    "speculative_decoding": {
+      "method": "mtp",
+      "num_speculative_tokens": 2
+    },
+    "shards_per_system": 24
+  },
+  "documented_exception": {
+    "affected_outputs": 1,
+    "system_id": "qwen35_9b_open_thinking",
+    "retry_max_tokens": 30000,
+    "other_request_parameters_unchanged": true
+  }
+}

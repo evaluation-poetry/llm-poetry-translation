@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.0",
+  "prompt_version": "agents_md_judge_v1_20260514",
+  "sample_seed": 20260513,
+  "sampled_poems": 20,
+  "dimensions": 11,
+  "score_minimum": 0,
+  "score_maximum": 10,
+  "score_increment": 0.5,
+  "candidate_identity": "anonymous_shuffled_labels",
+  "score_input": "final_translation_only",
+  "runs": [
+    {
+      "judge_id": "deepseek_v4_pro_non_thinking",
+      "model": "deepseek-v4-pro",
+      "panels": [
+        "original_seven_systems",
+        "open_qwen_nine_systems"
+      ],
+      "thinking": "disabled",
+      "temperature": 0,
+      "temperature_sent": true,
+      "top_p_sent": false,
+      "max_tokens": 8192,
+      "stream": false,
+      "response_format_sent": false,
+      "strict_json_validation": true
+    },
+    {
+      "judge_id": "gpt55_high_judge_a",
+      "model": "gpt-5.5",
+      "panel": "original_seven_systems",
+      "reasoning_effort": "high",
+      "temperature_sent": false,
+      "top_p_sent": false,
+      "max_completion_tokens": 8192,
+      "stream": false,
+      "response_format": "json_object"
+    },
+    {
+      "judge_id": "gpt55_high_judge_b",
+      "model": "gpt-5.5",
+      "panel": "deepseek_qwen_intensity",
+      "reasoning_effort": "high",
+      "temperature_sent": false,
+      "top_p_sent": false,
+      "max_completion_tokens": 8192,
+      "stream": false,
+      "response_format": "json_object"
+    }
+  ]
+}
