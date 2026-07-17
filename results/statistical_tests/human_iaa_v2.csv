@@ -1,0 +1,8 @@
+dim,n_items,n_complete,krippendorff_alpha_ordinal,kendall_w,fleiss_kappa_nominal,n_fleiss_complete,n_raters_fleiss,fleiss_assumption
+MF,140,140,0.7292094577936747,0.7790048356565529,0.7125553181133985,140,7,Nominal Fleiss kappa on complete items with the same rater set; integer categories 1..6.
+IR,140,140,0.33832337370319143,0.5220682359947008,0.4546653723869821,140,7,Nominal Fleiss kappa on complete items with the same rater set; integer categories 1..6.
+EV,140,140,0.4317928345530455,0.7157015976112051,0.38461180944759865,140,7,Nominal Fleiss kappa on complete items with the same rater set; integer categories 1..6.
+LR,140,140,0.39903595300425665,0.6749712552950063,0.2498224691791853,140,7,Nominal Fleiss kappa on complete items with the same rater set; integer categories 1..6.
+MD,140,139,0.2718646145296463,0.6610349266298006,0.1662519715202953,139,7,Nominal Fleiss kappa on complete items with the same rater set; integer categories 1..6.
+PT,140,139,0.42433286576541274,0.7783407161110194,0.24692087096961815,139,7,Nominal Fleiss kappa on complete items with the same rater set; integer categories 1..6.
+COMPOSITE,140,138,0.44225657686876174,0.7824603795387896,,0,0,Fleiss kappa not computed for COMPOSITE because averaged scores are not nominal integer categories.

@@ -1,0 +1,3 @@
+analysis,metric,n_full,n_excluding,excluded_n,nt_mean_shift,t_mean_shift,max_abs_system_mean_shift
+single_record_exclusion,comet,397,396,1,-7.891885027655476e-05,-0.0001406380467141588,0.0001406380467141588
+single_record_exclusion,bertscore_f1,397,396,1,4.9617510668342746e-05,-2.1156066064564882e-06,4.9617510668342746e-05
