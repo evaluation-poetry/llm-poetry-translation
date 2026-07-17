@@ -25,6 +25,7 @@ docs/dataset_schema.md          Expected local JSONL schema
 docs/prompts.md                 Full translation and LLM-as-judge prompts
 docs/judge_dimensions.md        Detailed 11-dimension judge rubric
 docs/evaluation_protocol.md     Automatic, judge, and human-evaluation protocol
+docs/supplemental_evaluation.md Supplemental parameters, code, and statistical tests
 docs/case_studies.md            Public-safe case-study guide and selected case index
 scripts/export_case_studies.py  Local exporter for redacted or private full case packets
 ```
@@ -39,6 +40,8 @@ data/processed/            Local-only canonical dataset workspace, ignored by gi
 scripts/                  Experiment entry points and utilities
 src/poetry_reasoning/     Core experiment package
 docs/                     Public protocol and supplement documentation
+configs/supplemental/     Published model, scoring, judge, and test parameters
+results/statistical_tests/ Aggregate inferential test results only
 .env.example              Environment variable template
 ```
 
@@ -46,7 +49,7 @@ docs/                     Public protocol and supplement documentation
 
 The code reproduces the experimental protocol and reporting pipeline. Exact API outputs may differ over time because external providers, model versions, decoding settings, and service-side implementations can change.
 
-The numerical tables in the paper are based on controlled private experiment logs. This repository lets readers rerun the same protocol with locally prepared data and their own API credentials.
+Per-record measurements and system summary tables remain local. The repository includes the supplemental inferential test outputs in `results/statistical_tests/`, together with their analysis code and run parameters.
 
 During translation, systems receive only the Chinese source poem. English references, English titles, translator names, source subsets, model identities, and system identities are never included in translation prompts. Reference translations are reserved for offline scoring and judge evaluation.
 
@@ -144,7 +147,7 @@ Run the fixed-seed LLM-as-judge evaluation:
   --seed 20260513
 ```
 
-Generated outputs are written under `results/`, which is ignored by git.
+Generated outputs are written under `results/` and remain ignored by git. The only tracked exception is `results/statistical_tests/`, which contains aggregate inferential results and no per-record fields.
 
 ## Case-Study Export
 
