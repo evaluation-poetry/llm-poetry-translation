@@ -6,6 +6,10 @@ requires-python = ">=3.10"
 dependencies = [
   "requests>=2.31",
   "pandas>=2.0",
+  "numpy>=1.21,<3",
+  "scipy>=1.10",
+  "statsmodels>=0.14",
+  "krippendorff>=0.8",
   "sacrebleu>=2.4",
   "bert-score>=0.3.13",
   "unbabel-comet>=2.2",

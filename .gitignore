@@ -14,8 +14,7 @@ AGENTS.md
 .claude/
 .deps/
 
-# Public release excludes these project folders
-tests/
+# Local configuration
 configs/
 
 # Private local notes and reference materials

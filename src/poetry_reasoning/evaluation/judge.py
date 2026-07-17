@@ -10,7 +10,7 @@ from pathlib import Path
 import random
 import statistics
 import time
-from typing import Any
+from typing import Any, Sequence
 
 import requests
 
@@ -21,6 +21,7 @@ from poetry_reasoning.baselines.common import (
     read_jsonl,
     write_jsonl,
 )
+from poetry_reasoning.evaluation.completeness import assert_complete, check_translation_completeness
 
 
 SOURCE_ORDER = {
@@ -40,7 +41,24 @@ SOURCE_LABELS = {
 OVERALL_SOURCE_ID = "overall_modern_poetry"
 OVERALL_SOURCE_LABEL = "Overall Modern Poetry"
 JUDGE_ID = "deepseek_v4_pro_non_thinking"
+GPT_JUDGE_ID = "gpt_5_5_high"
 JUDGE_PROMPT_VERSION = "agents_md_judge_v1_20260514"
+
+GPT_GATE_SYSTEM_IDS = [
+    "deepseek_v4_flash_thinking_max",
+    "qwen36_plus_thinking_b2048",
+    "qwen36_plus_thinking_b4096",
+]
+
+GPT_GATE_SCORE_FIELDS = [
+    "comet",
+    "bertscore_f1",
+    "sacrebleu_sentence",
+    "chrfpp_sentence",
+    "ter_sentence",
+    "line_count_diff",
+    "length_ratio",
+]
 
 DEFAULT_CANDIDATE_SYSTEM_IDS = [
     "baidu_translate",
@@ -199,13 +217,15 @@ def build_judge_manifest(
     return selected
 
 
-def latest_outputs_by_key(outputs_path: Path) -> dict[tuple[str, str], dict[str, Any]]:
+def latest_outputs_by_key(outputs_path: Path | Sequence[Path]) -> dict[tuple[str, str], dict[str, Any]]:
     latest: dict[tuple[str, str], dict[str, Any]] = {}
-    for row in read_jsonl(outputs_path):
-        system_id = str(row.get("system_id") or "")
-        record_id = str(row.get("record_id") or "")
-        if system_id and record_id:
-            latest[(system_id, record_id)] = row
+    paths = [outputs_path] if isinstance(outputs_path, Path) else list(outputs_path)
+    for path in paths:
+        for row in read_jsonl(path):
+            system_id = str(row.get("system_id") or "")
+            record_id = str(row.get("record_id") or "")
+            if system_id and record_id:
+                latest[(system_id, record_id)] = row
     return latest
 
 
@@ -235,6 +255,230 @@ def build_anonymous_candidates(
     for index, candidate in enumerate(candidates):
         candidate["candidate_id"] = chr(ord("A") + index)
     return candidates, missing
+
+
+def select_manifest_shard(
+    manifest: Sequence[dict[str, Any]],
+    shard_count: int,
+    shard_index: int,
+) -> list[dict[str, Any]]:
+    if shard_count < 1:
+        raise ValueError("shard_count must be at least 1")
+    if shard_index < 0 or shard_index >= shard_count:
+        raise ValueError("shard_index must be in [0, shard_count)")
+    return [record for index, record in enumerate(manifest) if index % shard_count == shard_index]
+
+
+def validate_shard_output_paths(
+    shard_count: int,
+    shard_index: int,
+    raw_path: Path,
+    mapping_path: Path,
+    *,
+    no_aggregate: bool,
+) -> None:
+    if raw_path.resolve() == mapping_path.resolve():
+        raise ValueError("raw_path and mapping_path must be different")
+    select_manifest_shard([], shard_count, shard_index)
+    if shard_count == 1:
+        return
+    token = f".shard-{shard_index}."
+    if not no_aggregate:
+        raise ValueError("shard runs require --no-aggregate")
+    if token not in raw_path.name or token not in mapping_path.name:
+        raise ValueError(f"shard output filenames must contain exact token {token}")
+
+
+def _write_mapping_verification(
+    path: Path,
+    *,
+    input_sha256: str,
+    record_count: int,
+    candidate_count: int,
+    passed: bool,
+) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(
+            {
+                "input_sha256": input_sha256,
+                "record_count": record_count,
+                "candidate_count": candidate_count,
+                "passed": passed,
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+
+def prepare_reused_mapping(
+    manifest: Sequence[dict[str, Any]],
+    outputs_by_key: dict[tuple[str, str], dict[str, Any]],
+    system_ids: Sequence[str],
+    reuse_mapping_path: Path,
+    verification_path: Path,
+) -> dict[str, list[dict[str, Any]]]:
+    digest = hashlib.sha256(reuse_mapping_path.read_bytes()).hexdigest()
+    mapping_rows = read_jsonl(reuse_mapping_path)
+    record_count = len(mapping_rows)
+    candidate_count = sum(
+        len(row.get("candidate_map", []))
+        for row in mapping_rows
+        if isinstance(row.get("candidate_map"), list)
+    )
+    try:
+        manifest_ids = [str(record.get("record_id") or "") for record in manifest]
+        mapping_ids = [str(row.get("record_id") or "") for row in mapping_rows]
+        if not all(manifest_ids) or len(set(manifest_ids)) != len(manifest_ids):
+            raise ValueError("manifest record ids are invalid")
+        if not all(mapping_ids) or len(set(mapping_ids)) != len(mapping_ids):
+            raise ValueError("mapping has duplicate or empty record ids")
+        if set(mapping_ids) != set(manifest_ids) or len(mapping_ids) != len(manifest_ids):
+            raise ValueError("mapping record set does not match manifest")
+
+        expected_systems = set(system_ids)
+        reused: dict[str, list[dict[str, Any]]] = {}
+        for row in mapping_rows:
+            record_id = str(row["record_id"])
+            candidate_map = row.get("candidate_map")
+            if not isinstance(candidate_map, list):
+                raise ValueError("mapping candidate_map must be a list")
+            candidate_ids = [str(candidate.get("candidate_id") or "") for candidate in candidate_map]
+            mapped_systems = [str(candidate.get("system_id") or "") for candidate in candidate_map]
+            if not all(candidate_ids) or len(set(candidate_ids)) != len(candidate_ids):
+                raise ValueError("mapping has duplicate or empty candidate ids")
+            if not all(mapped_systems) or len(mapped_systems) != len(expected_systems):
+                raise ValueError("mapping candidate systems do not match requested systems")
+            if set(mapped_systems) != expected_systems or len(set(mapped_systems)) != len(mapped_systems):
+                raise ValueError("mapping candidate systems do not match requested systems")
+
+            candidates: list[dict[str, Any]] = []
+            for candidate_id, system_id in zip(candidate_ids, mapped_systems):
+                output = outputs_by_key.get((system_id, record_id))
+                if not output or output.get("status") != "ok" or not str(output.get("output_text") or "").strip():
+                    raise ValueError("mapping references a missing or invalid output")
+                candidates.append(
+                    {
+                        "candidate_id": candidate_id,
+                        "system_id": system_id,
+                        "system_name": output.get("system_name") or system_id,
+                        "translation": str(output.get("output_text") or "").strip(),
+                    }
+                )
+            reused[record_id] = candidates
+    except Exception as exc:
+        _write_mapping_verification(
+            verification_path,
+            input_sha256=digest,
+            record_count=record_count,
+            candidate_count=candidate_count,
+            passed=False,
+        )
+        raise ValueError("mapping verification failed") from exc
+
+    _write_mapping_verification(
+        verification_path,
+        input_sha256=digest,
+        record_count=record_count,
+        candidate_count=candidate_count,
+        passed=True,
+    )
+    return reused
+
+
+def assert_gpt_stage_gate(
+    dataset_path: Path,
+    translation_specs: Sequence[tuple[str, Path]],
+    scores_path: Path,
+    *,
+    expected_count: int = 397,
+) -> dict[str, Any]:
+    spec_systems = [system_id for system_id, _ in translation_specs]
+    if len(spec_systems) != len(GPT_GATE_SYSTEM_IDS) or set(spec_systems) != set(GPT_GATE_SYSTEM_IDS):
+        raise RuntimeError("GPT translation gate failed: exactly the three required systems are required")
+    if len(set(spec_systems)) != len(spec_systems):
+        raise RuntimeError("GPT translation gate failed: duplicate system specification")
+
+    dataset = read_jsonl(dataset_path)
+    expected_record_ids = {
+        str(row.get("record_id") or "")
+        for row in dataset
+        if is_zh_en_record_with_reference(row) and str(row.get("record_id") or "")
+    }
+    translation_rows: list[dict[str, Any]] = []
+    for system_id, path in translation_specs:
+        path_rows = read_jsonl(path)
+        path_report = check_translation_completeness(
+            path_rows,
+            systems=[system_id],
+            expected_count=expected_count,
+            dataset_rows=dataset,
+            expected_prompt_version="understand_translate_v1",
+        )
+        try:
+            assert_complete(path_report)
+        except Exception as exc:
+            raise RuntimeError("GPT translation gate failed") from exc
+        translation_rows.extend(path_rows)
+    translation_report = check_translation_completeness(
+        translation_rows,
+        systems=GPT_GATE_SYSTEM_IDS,
+        expected_count=expected_count,
+        dataset_rows=dataset,
+        expected_prompt_version="understand_translate_v1",
+    )
+    try:
+        assert_complete(translation_report)
+    except Exception as exc:
+        raise RuntimeError("GPT translation gate failed") from exc
+
+    score_rows = read_jsonl(scores_path)
+    score_system_reports: dict[str, dict[str, Any]] = {}
+    for system_id in GPT_GATE_SYSTEM_IDS:
+        rows = [row for row in score_rows if str(row.get("system_id") or "") == system_id]
+        keys = [(system_id, str(row.get("record_id") or "")) for row in rows]
+        unique_keys = set(keys)
+        invalid_count = sum(
+            row.get("status") != "ok"
+            or not str(row.get("record_id") or "")
+            or any(
+                type(row.get(field)) not in (int, float) or not math.isfinite(float(row[field]))
+                for field in GPT_GATE_SCORE_FIELDS
+            )
+            for row in rows
+        )
+        duplicate_count = len(keys) - len(unique_keys)
+        actual_record_ids = {record_id for _, record_id in unique_keys if record_id}
+        record_set_mismatch = actual_record_ids != expected_record_ids
+        complete = (
+            len(rows) == expected_count
+            and len(unique_keys) == expected_count
+            and duplicate_count == 0
+            and invalid_count == 0
+            and not record_set_mismatch
+        )
+        score_system_reports[system_id] = {
+            "row_count": len(rows),
+            "unique_key_count": len(unique_keys),
+            "duplicate_key_count": duplicate_count,
+            "invalid_row_count": invalid_count,
+            "record_set_mismatch": record_set_mismatch,
+            "complete": complete,
+        }
+    score_report = {
+        "complete": all(report["complete"] for report in score_system_reports.values()),
+        "systems": score_system_reports,
+    }
+    if not score_report["complete"]:
+        raise RuntimeError("GPT score gate failed")
+    return {
+        "complete": True,
+        "translation_gate": translation_report,
+        "score_gate": score_report,
+    }
 
 
 def format_candidate_translations(candidates: list[dict[str, Any]]) -> str:
@@ -304,11 +548,76 @@ class DeepSeekJudgeClient:
             "content": message.get("content") or "",
             "reasoning_content": message.get("reasoning_content") or "",
             "token_usage": data.get("usage") or {},
+            "model": data.get("model") or self.model,
+            "system_fingerprint": data.get("system_fingerprint"),
+            "request_parameters": {key: value for key, value in payload.items() if key != "messages"},
+        }
+
+
+class GPTJudgeClient:
+    judge_id = GPT_JUDGE_ID
+
+    def __init__(self) -> None:
+        self.api_key = os.getenv("JUDGE_GPT_API_KEY", "")
+        self.model = os.getenv("JUDGE_GPT_MODEL", "gpt-5.5")
+        self.base_url = os.getenv("JUDGE_GPT_BASE_URL", "https://api.openai.com/v1")
+
+    def available(self) -> tuple[bool, str]:
+        if not self.api_key:
+            return False, "Missing JUDGE_GPT_API_KEY."
+        return True, ""
+
+    def _chat_url(self) -> str:
+        base = self.base_url.rstrip("/")
+        if base.endswith("/chat/completions"):
+            return base
+        if base.endswith("/v1"):
+            return f"{base}/chat/completions"
+        return f"{base}/v1/chat/completions"
+
+    def evaluate(self, prompt: str) -> dict[str, Any]:
+        payload: dict[str, Any] = {
+            "model": self.model,
+            "messages": [{"role": "user", "content": prompt}],
+            "reasoning_effort": "high",
+            "stream": False,
+            "response_format": {"type": "json_object"},
+            "max_completion_tokens": int(os.getenv("JUDGE_GPT_MAX_TOKENS", "8192")),
+        }
+        headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
+        response = requests.post(
+            self._chat_url(),
+            headers=headers,
+            json=payload,
+            timeout=float(os.getenv("JUDGE_TIMEOUT_SECONDS", "600")),
+        )
+        if response.status_code >= 400:
+            raise RuntimeError(f"Judge HTTP {response.status_code}: {_redact_secret(response.text[:1000])}")
+        data = response.json()
+        message = data.get("choices", [{}])[0].get("message", {})
+        return {
+            "raw_response": data,
+            "content": message.get("content") or "",
+            "reasoning_content": message.get("reasoning_content") or "",
+            "token_usage": data.get("usage") or {},
+            "model": data.get("model") or self.model,
+            "system_fingerprint": data.get("system_fingerprint"),
+            "request_parameters": {key: value for key, value in payload.items() if key != "messages"},
         }
 
 
 def parse_strict_json(text: str) -> dict[str, Any]:
-    parsed = json.loads(text)
+    candidate = text.strip()
+    if candidate.startswith("```"):
+        lines = candidate.splitlines()
+        if (
+            len(lines) < 3
+            or lines[0].strip().lower() not in {"```", "```json"}
+            or lines[-1].strip() != "```"
+        ):
+            raise ValueError("Judge response must contain only one complete JSON code fence.")
+        candidate = "\n".join(lines[1:-1]).strip()
+    parsed = json.loads(candidate)
     if not isinstance(parsed, dict):
         raise ValueError("Judge response root must be a JSON object.")
     return parsed
@@ -355,7 +664,13 @@ def validate_judge_json(parsed: dict[str, Any], expected_candidate_ids: list[str
         raise ValueError(f"candidate_scores ids {sorted(seen)} do not match expected {sorted(expected)}.")
 
     ranking = parsed.get("ranking")
-    if not isinstance(ranking, list) or set(str(item) for item in ranking) != expected:
+    ranking_ids = [str(item) for item in ranking] if isinstance(ranking, list) else []
+    if (
+        not isinstance(ranking, list)
+        or len(ranking_ids) != len(expected)
+        or len(set(ranking_ids)) != len(ranking_ids)
+        or set(ranking_ids) != expected
+    ):
         raise ValueError("ranking must contain each candidate id exactly once.")
     if not isinstance(parsed.get("ranking_reason"), str) or not parsed.get("ranking_reason", "").strip():
         raise ValueError("ranking_reason must be a non-empty string.")
@@ -365,7 +680,7 @@ def validate_judge_json(parsed: dict[str, Any], expected_candidate_ids: list[str
 def evaluate_record_with_retries(
     record: dict[str, Any],
     candidates: list[dict[str, Any]],
-    judge: DeepSeekJudgeClient,
+    judge: DeepSeekJudgeClient | GPTJudgeClient,
     max_retries: int = 2,
 ) -> dict[str, Any]:
     prompt = build_judge_prompt(record, candidates)
@@ -384,6 +699,9 @@ def evaluate_record_with_retries(
                 "raw_response": response["raw_response"],
                 "reasoning_content": response.get("reasoning_content", ""),
                 "token_usage": response.get("token_usage", {}),
+                "response_model": response.get("model") or judge.model,
+                "system_fingerprint": response.get("system_fingerprint"),
+                "request_parameters": response.get("request_parameters", {}),
                 "latency_seconds": time.perf_counter() - start,
                 "attempts": attempt + 1,
                 "errors": errors,
@@ -398,6 +716,9 @@ def evaluate_record_with_retries(
         "raw_response": last_raw.get("raw_response", last_raw),
         "reasoning_content": last_raw.get("reasoning_content", ""),
         "token_usage": last_raw.get("token_usage", {}),
+        "response_model": last_raw.get("model") or judge.model,
+        "system_fingerprint": last_raw.get("system_fingerprint"),
+        "request_parameters": last_raw.get("request_parameters", {}),
         "latency_seconds": time.perf_counter() - start,
         "attempts": max_retries + 1,
         "errors": errors,
@@ -406,7 +727,7 @@ def evaluate_record_with_retries(
 
 def run_judge_evaluation(
     manifest: list[dict[str, Any]],
-    outputs_path: Path,
+    outputs_path: Path | Sequence[Path],
     raw_path: Path,
     mapping_path: Path,
     system_ids: list[str] | None = None,
@@ -415,17 +736,64 @@ def run_judge_evaluation(
     force: bool = False,
     retry_failed: bool = False,
     sleep_seconds: float = 0.2,
+    judge_provider: str = "deepseek",
+    reuse_mapping_path: Path | None = None,
+    mapping_verification_path: Path | None = None,
+    shard_count: int = 1,
+    shard_index: int = 0,
+    gate_dataset_path: Path | None = None,
+    gate_translation_specs: Sequence[tuple[str, Path]] | None = None,
+    gate_scores_path: Path | None = None,
+    gate_expected_count: int = 397,
+    no_aggregate: bool = False,
 ) -> None:
+    validate_shard_output_paths(
+        shard_count,
+        shard_index,
+        raw_path,
+        mapping_path,
+        no_aggregate=no_aggregate,
+    )
     system_ids = system_ids or DEFAULT_CANDIDATE_SYSTEM_IDS
+    outputs_by_key = latest_outputs_by_key(outputs_path)
+
+    reused_candidates: dict[str, list[dict[str, Any]]] | None = None
+    if reuse_mapping_path is not None:
+        if mapping_verification_path is None:
+            raise ValueError("mapping_verification_path is required with reuse_mapping_path")
+        if reuse_mapping_path.resolve() == mapping_path.resolve():
+            raise ValueError("mapping output path must differ from the read-only reuse mapping path")
+        reused_candidates = prepare_reused_mapping(
+            manifest,
+            outputs_by_key,
+            system_ids,
+            reuse_mapping_path,
+            mapping_verification_path,
+        )
+
+    if judge_provider == "gpt":
+        if gate_dataset_path is None or gate_translation_specs is None or gate_scores_path is None:
+            raise RuntimeError("GPT stage gate requires translation specs, dataset, and scores")
+        assert_gpt_stage_gate(
+            gate_dataset_path,
+            gate_translation_specs,
+            gate_scores_path,
+            expected_count=gate_expected_count,
+        )
+        judge: DeepSeekJudgeClient | GPTJudgeClient = GPTJudgeClient()
+    elif judge_provider == "deepseek":
+        judge = DeepSeekJudgeClient()
+    else:
+        raise ValueError(f"Unsupported judge provider: {judge_provider}")
+
+    available, reason = judge.available()
+    if not available:
+        raise RuntimeError(reason)
+
     if force:
         for path in [raw_path, mapping_path]:
             if path.exists():
                 path.unlink()
-    outputs_by_key = latest_outputs_by_key(outputs_path)
-    judge = DeepSeekJudgeClient()
-    available, reason = judge.available()
-    if not available:
-        raise RuntimeError(reason)
 
     existing_ok: set[str] = set()
     existing_non_ok: set[str] = set()
@@ -437,13 +805,18 @@ def run_judge_evaluation(
             else:
                 existing_non_ok.add(record_id)
 
-    records = manifest[:limit] if limit else manifest
+    records = select_manifest_shard(manifest, shard_count, shard_index)
+    records = records[:limit] if limit else records
     for index, record in enumerate(records, start=1):
         record_id = record["record_id"]
         if record_id in existing_ok or (record_id in existing_non_ok and not retry_failed):
             print(f"[judge] {index}/{len(records)} {record_id} skipped", flush=True)
             continue
-        candidates, missing = build_anonymous_candidates(record, outputs_by_key, system_ids, seed=seed)
+        if reused_candidates is None:
+            candidates, missing = build_anonymous_candidates(record, outputs_by_key, system_ids, seed=seed)
+        else:
+            candidates = reused_candidates[record_id]
+            missing = []
         candidate_map = [
             {
                 "candidate_id": candidate["candidate_id"],
@@ -460,14 +833,25 @@ def run_judge_evaluation(
             "missing_candidates": missing,
             "created_at": now_iso(),
         }
+        public_row_identity = (
+            mapping_row
+            if judge_provider == "deepseek"
+            else {
+                "record_id": record_id,
+                "source_id": record.get("source_id", ""),
+                "judge_id": judge.judge_id,
+                "created_at": mapping_row["created_at"],
+            }
+        )
         if len(candidates) < 2:
             raw_row = {
-                **mapping_row,
+                **public_row_identity,
                 "status": "error",
                 "error": "Need at least two available candidate translations.",
                 "parsed_response": {},
                 "raw_response": {},
                 "judge_model": judge.model,
+                "judge_request_parameters": {},
                 "judge_prompt_version": JUDGE_PROMPT_VERSION,
                 "latency_seconds": 0.0,
             }
@@ -482,7 +866,7 @@ def run_judge_evaluation(
             max_retries=int(os.getenv("JUDGE_MAX_RETRIES", "2")),
         )
         raw_row = {
-            **mapping_row,
+            **public_row_identity,
             "status": result["status"],
             "error": "; ".join(result["errors"]) if result["status"] != "ok" else "",
             "parsed_response": result["parsed_response"],
@@ -490,6 +874,9 @@ def run_judge_evaluation(
             "reasoning_content": result["reasoning_content"],
             "token_usage": result["token_usage"],
             "judge_model": judge.model,
+            "judge_response_model": result["response_model"],
+            "judge_request_parameters": result["request_parameters"],
+            "judge_system_fingerprint": result["system_fingerprint"],
             "judge_prompt_version": JUDGE_PROMPT_VERSION,
             "latency_seconds": result["latency_seconds"],
             "attempts": result["attempts"],
@@ -502,18 +889,92 @@ def run_judge_evaluation(
             time.sleep(sleep_seconds)
 
 
-def aggregate_judge_results(raw_path: Path, scores_path: Path, summary_path: Path) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+def _validated_private_mapping_by_record(
+    mapping_rows: Sequence[dict[str, Any]],
+    latest_raw_by_record: dict[str, dict[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    latest_mapping_by_record: dict[str, dict[str, Any]] = {}
+    for row in mapping_rows:
+        record_id = str(row.get("record_id") or "")
+        candidate_map = row.get("candidate_map")
+        if not record_id or not isinstance(candidate_map, list) or not candidate_map:
+            raise ValueError("private mapping validation failed: invalid record or candidate_map")
+        if not all(isinstance(item, dict) for item in candidate_map):
+            raise ValueError("private mapping validation failed: candidate entries must be objects")
+        candidate_ids = [str(item.get("candidate_id") or "") for item in candidate_map]
+        system_ids = [str(item.get("system_id") or "") for item in candidate_map]
+        if (
+            not all(candidate_ids)
+            or len(set(candidate_ids)) != len(candidate_ids)
+            or not all(system_ids)
+            or len(set(system_ids)) != len(system_ids)
+        ):
+            raise ValueError("private mapping validation failed: candidate and system ids must be nonempty and unique")
+        latest_mapping_by_record[record_id] = row
+
+    if set(latest_raw_by_record) != set(latest_mapping_by_record):
+        raise ValueError("private mapping validation failed: raw and mapping record sets differ")
+
+    for record_id, raw_row in latest_raw_by_record.items():
+        if raw_row.get("status") != "ok":
+            continue
+        mapping_ids = {
+            str(item.get("candidate_id") or "")
+            for item in latest_mapping_by_record[record_id]["candidate_map"]
+        }
+        parsed = raw_row.get("parsed_response")
+        if not isinstance(parsed, dict):
+            raise ValueError("private mapping validation failed: parsed response is invalid")
+        candidate_scores = parsed.get("candidate_scores")
+        ranking = parsed.get("ranking")
+        if not isinstance(candidate_scores, list) or not isinstance(ranking, list):
+            raise ValueError("private mapping validation failed: candidates or ranking are invalid")
+        if not all(isinstance(item, dict) for item in candidate_scores):
+            raise ValueError("private mapping validation failed: candidate scores must be objects")
+        parsed_ids = [str(item.get("candidate_id") or "") for item in candidate_scores]
+        ranking_ids = [str(item) for item in ranking]
+        if (
+            len(parsed_ids) != len(mapping_ids)
+            or len(set(parsed_ids)) != len(parsed_ids)
+            or set(parsed_ids) != mapping_ids
+            or len(ranking_ids) != len(mapping_ids)
+            or len(set(ranking_ids)) != len(ranking_ids)
+            or set(ranking_ids) != mapping_ids
+        ):
+            raise ValueError("private mapping validation failed: parsed candidate ids do not match mapping")
+    return latest_mapping_by_record
+
+
+def aggregate_judge_results(
+    raw_path: Path,
+    scores_path: Path,
+    summary_path: Path,
+    private_mapping_path: Path | None = None,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     latest_by_record: dict[str, dict[str, Any]] = {}
     for row in read_jsonl(raw_path):
         record_id = str(row.get("record_id") or "")
         if record_id:
             latest_by_record[record_id] = row
 
+    private_mapping_by_record: dict[str, dict[str, Any]] = {}
+    if private_mapping_path is not None:
+        private_mapping_by_record = _validated_private_mapping_by_record(
+            read_jsonl(private_mapping_path),
+            latest_by_record,
+        )
+
     score_rows: list[dict[str, Any]] = []
     for row in latest_by_record.values():
         if row.get("status") != "ok":
             continue
-        mapping = {item["candidate_id"]: item for item in row.get("candidate_map", [])}
+        mapping_items = row.get("candidate_map")
+        if not isinstance(mapping_items, list):
+            mapping_items = private_mapping_by_record.get(str(row.get("record_id") or ""), {}).get(
+                "candidate_map",
+                [],
+            )
+        mapping = {item["candidate_id"]: item for item in mapping_items}
         parsed = row.get("parsed_response") or {}
         ranking = [str(item) for item in parsed.get("ranking", [])]
         rank_position = {candidate_id: index + 1 for index, candidate_id in enumerate(ranking)}
