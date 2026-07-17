@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import math
 from pathlib import Path
 import re
 
@@ -51,6 +52,48 @@ FORBIDDEN_COLUMN_FRAGMENT = re.compile(
 )
 ABSOLUTE_PATH = re.compile(r"(?:^|\s)(?:[A-Za-z]:[\\/]|/home/|/Users/|/mnt/)")
 HEX_DIGEST = re.compile(r"^[0-9a-f]{40,128}$", re.IGNORECASE)
+PROBABILITY_COLUMN = re.compile(
+    r"(?:^p(?:_|$)|_p(?:_|$)|probability$|fraction$|^(?:alpha|power)$)",
+    re.IGNORECASE,
+)
+NONFINITE_LITERAL = {"nan", "+nan", "-nan", "inf", "+inf", "-inf", "infinity", "+infinity", "-infinity"}
+
+
+def _as_finite_number(value: str, *, path: Path, row_number: int, column: str) -> float:
+    try:
+        number = float(value)
+    except ValueError as exc:
+        raise ValueError(f"non-numeric value in {path.name}, row {row_number}, column {column}") from exc
+    if not math.isfinite(number):
+        raise ValueError(f"non-finite value in {path.name}, row {row_number}, column {column}")
+    return number
+
+
+def _audit_statistical_values(path: Path, row_number: int, row: dict[str, str | None]) -> None:
+    for column, value in row.items():
+        text = (value or "").strip()
+        if text.lower() in NONFINITE_LITERAL:
+            raise ValueError(f"non-finite value in {path.name}, row {row_number}, column {column}")
+        if text and PROBABILITY_COLUMN.search(column):
+            probability = _as_finite_number(text, path=path, row_number=row_number, column=column)
+            if not 0 <= probability <= 1:
+                raise ValueError(f"probability outside [0, 1] in {path.name}, row {row_number}, column {column}")
+
+    for lower_column in row:
+        if lower_column.endswith("_low"):
+            upper_column = lower_column[:-4] + "_high"
+        elif lower_column.endswith("_lo"):
+            upper_column = lower_column[:-3] + "_hi"
+        else:
+            continue
+        lower_text = (row.get(lower_column) or "").strip()
+        upper_text = (row.get(upper_column) or "").strip()
+        if not lower_text or not upper_text:
+            continue
+        lower = _as_finite_number(lower_text, path=path, row_number=row_number, column=lower_column)
+        upper = _as_finite_number(upper_text, path=path, row_number=row_number, column=upper_column)
+        if lower > upper:
+            raise ValueError(f"reversed interval in {path.name}, row {row_number}: {lower_column}/{upper_column}")
 
 
 def audit_result_file(path: Path) -> int:
@@ -63,13 +106,18 @@ def audit_result_file(path: Path) -> int:
         reader = csv.DictReader(handle)
         if not reader.fieldnames:
             raise ValueError(f"missing CSV header: {path.name}")
+        if len(reader.fieldnames) != len(set(reader.fieldnames)):
+            raise ValueError(f"duplicate CSV column in {path.name}")
         for column in reader.fieldnames:
+            if column != column.strip():
+                raise ValueError(f"whitespace in CSV column name in {path.name}: {column!r}")
             normalized = column.strip().lower()
             if normalized in FORBIDDEN_COLUMNS or FORBIDDEN_COLUMN_FRAGMENT.search(normalized):
                 raise ValueError(f"forbidden column in {path.name}: {column}")
 
         row_count = 0
         for row_count, row in enumerate(reader, start=1):
+            _audit_statistical_values(path, row_count, row)
             for value in row.values():
                 text = (value or "").strip()
                 if text.startswith(("http://", "https://")) or ABSOLUTE_PATH.search(text):

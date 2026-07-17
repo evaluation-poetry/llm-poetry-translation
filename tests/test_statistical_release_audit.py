@@ -35,6 +35,30 @@ def test_audit_accepts_aggregate_inferential_fields(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize(
+    ("fieldnames", "row", "message"),
+    [
+        (["analysis", "effect"], {"analysis": "test", "effect": "nan"}, "non-finite"),
+        (["analysis", "p_holm"], {"analysis": "test", "p_holm": 1.1}, "probability"),
+        (
+            ["analysis", "ci_low", "ci_high"],
+            {"analysis": "test", "ci_low": 2, "ci_high": 1},
+            "reversed interval",
+        ),
+    ],
+)
+def test_audit_rejects_invalid_statistical_values(
+    tmp_path: Path,
+    fieldnames: list[str],
+    row: dict[str, object],
+    message: str,
+) -> None:
+    path = tmp_path / "test.csv"
+    _write_csv(path, fieldnames, row)
+    with pytest.raises(ValueError, match=message):
+        audit_result_file(path)
+
+
+@pytest.mark.parametrize(
     "column",
     [
         "record_id",
