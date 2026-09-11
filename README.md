@@ -203,10 +203,16 @@ PYTHONPATH=src .venv/bin/python scripts/merge_jsonl_outputs.py \
 
 Then run the same scoring and LLM-as-judge commands shown in the local workflow.
 
-## Citation Link
+## Citation
 
-Use this public repository URL in the paper:
+If you find this work helpful, please cite our paper:
 
-```tex
-The source code and experimental scripts of this work are publicly available\footnote{\url{https://github.com/evaluation-poetry/llm-poetry-translation}}.
+```bibtex
+@inproceedings{li2026less,
+  title={Less Thinking, More Poetry: A Controlled Comparison of Reasoning and Non-Reasoning {LLMs} for Modern Chinese Poetry Translation},
+  author={Li, Bailiang and Zhang, Wentao and Tan, Jietian and You, Mu and Zhang, Junbin and Tan, Zehan and Shen, Henghua and Wong, Derek F. and Fang, Tao},
+  booktitle={Proceedings of the 15th CCF International Conference on Natural Language Processing and Chinese Computing (NLPCC)},
+  year={2026},
+  organization={Springer}
+}
 ```
